@@ -1,9 +1,11 @@
 (ns specs.internet
+  "Provides fns and specs for common representations of Internet-related values"
   (:require [clojure.edn :as edn]
             [clojure.spec :as s]
             [clojure.string :as string]
             [clojure.test.check.generators :as gen])
-  (:import [java.util.regex Pattern]))
+  (:import [java.net URI]
+           [java.util.regex Pattern]))
 
 (s/def ::hostpart
   (letfn [(pred [s]
@@ -1522,3 +1524,34 @@
                                         (s/gen hostname-spec))]
                 (gen/return (str local-part "@" hostname-part))))]
       (s/spec pred :gen gen))))
+
+(s/def ::email-address
+  (email-address :domains tlds))
+
+(s/def ::common-email-address
+  (email-address :hosts #{"gmail.com" "yahoo.com" "outlook.com" "aol.com"}))
+
+(defn url
+  [& options]
+  (let [{:keys [schemes hosts]} options
+        schemes (when (seq schemes) (set schemes))
+        hosts (when (seq hosts) (set hosts))]
+    (letfn [(pred [s]
+              (try
+                (let [uri (URI. s)]
+                  (and (or (not (seq schemes))
+                           (contains? schemes (.getScheme uri)))
+                       (or (not (seq hosts))
+                           (contains? hosts (.getHost uri)))))
+                (catch Exception _ false)))
+            (gen []
+              (let [schemes (or schemes #{"http" "https"})]
+                (gen/let [scheme (gen/elements schemes)
+                          host (if (seq hosts)
+                                 (gen/elements hosts)
+                                 (s/gen ::fully-qualified-hostname))]
+                  (str scheme "://" host "/"))))]
+      (s/spec pred :gen gen))))
+
+(s/def ::web-url
+  (url :schemes #{"http" "https"}))
