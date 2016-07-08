@@ -12,9 +12,13 @@
     :min       - minimum value (inclusive, default none)
     :max       - maximum value (inclusive, default none)
 
+   A decimal satifies this spec if its precision and scale are not greater
+   than the specified precision and scale, if given.
+
    Note that the java math definition of precision and scale may not be the
    same as e.g. your database. For example, -1E-75M has a precision of 1 and a
-   scale of 75. For sanest results, you should specify both."
+   scale of 75. For sanest results, you should specify both, though the spec
+   does not require both."
   [& options]
   (let [{:keys [precision scale min max]} options]
     (when (and min max)
