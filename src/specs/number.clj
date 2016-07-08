@@ -21,8 +21,6 @@
    does not require both."
   [& options]
   (let [{:keys [precision scale min max]} options]
-    (when (or precision scale min max)
-      (prn precision scale min max))
     (letfn [(pred [d]
               (try
                 (let [d (bigdec d)]
@@ -59,6 +57,13 @@
                       (.round mc))))))]
       (s/spec pred :gen gen))))
 
+(s/def ::real
+  (s/spec (fn [x] (and (number? x)
+                       (not= Double/POSITIVE_INFINITY x)
+                       (not= Double/NEGATIVE_INFINITY x)
+                       (not= Double/NaN x)))
+          :gen #(gen/double* {:infinite? false :NaN? false})))
+
 (s/def ::precision
   pos-int?)
 
@@ -67,10 +72,10 @@
           :gen #(gen/large-integer* {:min 0})))
 
 (s/def ::min
-  number?)
+  ::real)
 
 (s/def ::max
-  number?)
+  ::real)
 
 (s/fdef decimal-in
   :args (s/and (s/keys* :opt-un [::precision ::scale ::min ::max])
@@ -82,7 +87,19 @@
                        (or (not scale)
                            (not (neg? scale)))
                        (or (not (and precision scale))
-                           (>= precision scale)))))
+                           (>= precision scale))
+                       (or (not min)
+                           (and (or (not precision)
+                                    (>= precision (.precision (bigdec min))))
+                                (or (not scale)
+                                    (and (not (neg? (.scale (bigdec min))))
+                                         (>= scale (.scale (bigdec min)))))))
+                       (or (not max)
+                           (and (or (not precision)
+                                    (>= precision (.precision (bigdec max))))
+                                (or (not scale)
+                                    (and (not (neg? (.scale (bigdec max))))
+                                         (>= scale (.scale (bigdec max))))))))))
   :ret s/spec?
   :fn #(let [{:keys [ret args]} %
              {:keys [min max]} args]
