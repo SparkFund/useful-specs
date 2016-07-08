@@ -46,13 +46,13 @@
             (gen []
               (let [min (or min
                             (and precision
-                                 (-> (BigDecimal/ONE)
+                                 (-> BigDecimal/ONE
                                      (.movePointRight precision)
                                      dec
                                      .negate)))
                     max (or max
                             (and precision
-                                 (-> (BigDecimal/ONE)
+                                 (-> BigDecimal/ONE
                                      (.movePointRight precision)
                                      dec)))]
                 (gen/let [p (gen/double* {:infinite? false :NaN? false :min min :max max})]
