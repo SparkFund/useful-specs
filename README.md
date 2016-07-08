@@ -5,7 +5,7 @@ A collection of generally useful specs with generators.
 The current focus is Internet-related values: hostnames, email
 addresses, urls, etc.
 
-`sparkfund/useful-specs "0.1.0"`
+`[sparkfund/useful-specs "0.1.0"]`
 
 ## Usage
 
