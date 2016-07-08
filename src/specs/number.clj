@@ -3,6 +3,17 @@
             [clojure.test.check.generators :as gen])
   (:import [java.math BigDecimal MathContext RoundingMode]))
 
+(defn decimal-pred
+  [precision scale]
+  (fn [d]
+    (let [d (bigdec d)]
+      (and (or (not precision)
+               (>= precision (.precision d)))
+           (or (not scale)
+               (let [d-scale (.scale d)]
+                 (and (not (neg? d-scale))
+                      (>= scale d-scale))))))))
+
 (defn decimal-in
   "Specs a decimal number. The number type may be anything that bigdec
    accepts. Options:
@@ -20,21 +31,14 @@
    scale of 75. For sanest results, you should specify both, though the spec
    does not require both."
   [& options]
-  (let [{:keys [precision scale min max]} options]
+  (let [{:keys [precision scale min max]} options
+        dec-pred (decimal-pred precision scale)]
     (letfn [(pred [d]
-              (try
-                (let [d (bigdec d)]
-                  (and (or (not precision)
-                           (>= precision (.precision d)))
-                       (or (not scale)
-                           (let [d-scale (.scale d)]
-                             (and (not (neg? d-scale))
-                                  (>= scale d-scale))))
-                       (or (not min)
-                           (>= d min))
-                       (or (not max)
-                           (>= max d))))
-                (catch Exception _ false)))
+              (and (dec-pred d)
+                   (or (not min)
+                       (>= d min))
+                   (or (not max)
+                       (>= max d))))
             (gen []
               (let [min (or min
                             (and precision
@@ -79,7 +83,8 @@
 
 (s/fdef decimal-in
   :args (s/and (s/keys* :opt-un [::precision ::scale ::min ::max])
-               #(let [{:keys [min max precision scale]} %]
+               #(let [{:keys [min max precision scale]} %
+                      dec-pred (decimal-pred precision scale)]
                   (and (or (not (and min max))
                            (>= max min))
                        (or (not precision)
@@ -89,17 +94,9 @@
                        (or (not (and precision scale))
                            (>= precision scale))
                        (or (not min)
-                           (and (or (not precision)
-                                    (>= precision (.precision (bigdec min))))
-                                (or (not scale)
-                                    (and (not (neg? (.scale (bigdec min))))
-                                         (>= scale (.scale (bigdec min)))))))
+                           (dec-pred min))
                        (or (not max)
-                           (and (or (not precision)
-                                    (>= precision (.precision (bigdec max))))
-                                (or (not scale)
-                                    (and (not (neg? (.scale (bigdec max))))
-                                         (>= scale (.scale (bigdec max))))))))))
+                           (dec-pred max)))))
   :ret s/spec?
   :fn #(let [{:keys [ret args]} %
              {:keys [min max]} args]
