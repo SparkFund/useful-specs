@@ -3,6 +3,13 @@
             [clojure.test.check.generators :as gen])
   (:import [java.math BigDecimal MathContext RoundingMode]))
 
+(s/def ::real
+  (s/spec (fn [x] (and (number? x)
+                       (not= Double/POSITIVE_INFINITY x)
+                       (not= Double/NEGATIVE_INFINITY x)
+                       (not= Double/NaN x)))
+          :gen #(gen/double* {:infinite? false :NaN? false})))
+
 (defn decimal-pred
   [precision scale]
   (fn [d]
@@ -61,28 +68,24 @@
                       (.round mc))))))]
       (s/spec pred :gen gen))))
 
-(s/def ::real
-  (s/spec (fn [x] (and (number? x)
-                       (not= Double/POSITIVE_INFINITY x)
-                       (not= Double/NEGATIVE_INFINITY x)
-                       (not= Double/NaN x)))
-          :gen #(gen/double* {:infinite? false :NaN? false})))
-
-(s/def ::precision
+(s/def :specs.number.decimal/precision
   pos-int?)
 
-(s/def ::scale
+(s/def :specs.number.decimal/scale
   (s/spec (fn [x] (and (int? x) (not (neg? x))))
           :gen #(gen/large-integer* {:min 0})))
 
-(s/def ::min
+(s/def :specs.number.decimal/min
   ::real)
 
-(s/def ::max
+(s/def :specs.number.decimal/max
   ::real)
 
 (s/fdef decimal-in
-  :args (s/and (s/keys* :opt-un [::precision ::scale ::min ::max])
+        :args (s/and (s/keys* :opt-un [:specs.number.decimal/precision
+                                       :specs.number.decimal/scale
+                                       :specs.number.decimal/min
+                                       :specs.number.decimal/max])
                #(let [{:keys [min max precision scale]} %
                       dec-pred (decimal-pred precision scale)]
                   (and (or (not (and min max))
