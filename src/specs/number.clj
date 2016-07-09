@@ -1,6 +1,6 @@
 (ns specs.number
   (:require [clojure.spec :as s]
-            [clojure.test.check.generators :as gen])
+            [clojure.spec.gen :as gen])
   (:import [java.math BigDecimal MathContext RoundingMode]))
 
 (s/def ::real
@@ -57,15 +57,19 @@
                             (and precision
                                  (-> BigDecimal/ONE
                                      (.movePointRight precision)
-                                     dec)))]
-                (gen/let [p (gen/double* {:infinite? false :NaN? false :min min :max max})]
-                  (let [mc (when precision
-                             (MathContext. precision RoundingMode/HALF_UP))]
-                    (cond-> (bigdec p)
-                      scale
-                      (.setScale scale BigDecimal/ROUND_HALF_UP)
-                      precision
-                      (.round mc))))))]
+                                     dec)))
+                    mc (when precision
+                         (MathContext. precision RoundingMode/HALF_UP))]
+                (letfn [(f [d]
+                          (cond-> (bigdec d)
+                            scale
+                            (.setScale scale BigDecimal/ROUND_HALF_UP)
+                            precision
+                            (.round mc)))]
+                  (gen/fmap f (gen/double* {:infinite? false
+                                            :NaN? false
+                                            :min min
+                                            :max max})))))]
       (s/spec pred :gen gen))))
 
 (s/def :specs.number.decimal/precision
