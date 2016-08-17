@@ -14,7 +14,7 @@ addresses, urls, etc.
 (require '[specs.internet :as si])
 
 (s/conform ::si/email-address "user@example.com") ; => "user@example.com"
-(s/conform (s/hostname :domains ["example.com"]) "www.example.com") ; => "www.example.com"
+(s/conform (si/hostname :domains ["example.com"]) "www.example.com") ; => "www.example.com"
 
 (require '[specs.number :as number])
 
