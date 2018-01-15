@@ -1,7 +1,7 @@
 (ns specs.string
   "Experiments expressing string specs as char seq specs"
-  (:require [clojure.spec :as s]
-            [clojure.spec.gen :as gen]
+  (:require [clojure.spec.alpha :as s]
+            [clojure.spec.gen.alpha :as gen]
             [clojure.string :as string]))
 
 (defn charseq-in
