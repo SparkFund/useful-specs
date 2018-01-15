@@ -2,7 +2,7 @@
   "Provides fns and specs for common representations of Internet-related values"
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
-            [clojure.spec :as s]
+            [clojure.spec.alpha :as s]
             [clojure.string :as string]
             [clojure.test.check.generators :as gen])
   (:import [java.net URI]

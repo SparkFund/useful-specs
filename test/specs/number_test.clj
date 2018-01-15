@@ -1,5 +1,5 @@
 (ns specs.number-test
-  (:require [clojure.spec.test :as stest]
+  (:require [clojure.spec.test.alpha :as stest]
             [clojure.test :refer :all]
             [specs.number :refer :all]))
 
